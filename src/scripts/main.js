@@ -9,7 +9,12 @@ function parseInput(id) {
 }
 
 // --- 데이터 로드/저장 ---
-let data = JSON.parse(localStorage.getItem('financeData') || '{"income":0,"assets":[],"liabilities":[]}');
+let data = JSON.parse(localStorage.getItem('financeData') || '{"incomes":[],"assets":[],"liabilities":[]}');
+// 구버전 데이터 마이그레이션
+if (typeof data.income === 'number') {
+  data.incomes = data.income > 0 ? [{ id: Date.now(), name: '월급', amount: data.income }] : [];
+  delete data.income;
+}
 
 function save() {
   localStorage.setItem('financeData', JSON.stringify(data));
@@ -17,10 +22,18 @@ function save() {
 }
 
 // --- 수입 ---
-function saveIncome() {
-  const val = parseInput('monthly-income');
-  if (!val || val < 0) return;
-  data.income = val;
+function addIncome() {
+  const name = document.getElementById('income-name').value.trim();
+  const amount = parseInput('income-amount');
+  if (!name || !amount) return alert('수입명과 금액을 입력해주세요.');
+  data.incomes.push({ id: Date.now(), name, amount });
+  document.getElementById('income-name').value = '';
+  document.getElementById('income-amount').value = '';
+  save();
+}
+
+function deleteIncome(id) {
+  data.incomes = data.incomes.filter(i => i.id !== id);
   save();
 }
 
@@ -68,13 +81,14 @@ function fmt(n) {
 
 // --- 계산 ---
 function calcTotals() {
+  const totalIncome = data.incomes.reduce((s, i) => s + i.amount, 0);
   const totalAssets = data.assets.reduce((s, a) => s + a.amount, 0);
   const totalLiabilities = data.liabilities.reduce((s, l) => s + l.total, 0);
   const monthlyPayment = data.liabilities.reduce((s, l) => s + l.monthly, 0);
   const monthlyInterest = data.liabilities.reduce((s, l) => s + (l.total * (l.rate / 100) / 12), 0);
   const netWorth = totalAssets - totalLiabilities;
-  const monthlySavings = data.income - monthlyPayment;
-  return { totalAssets, totalLiabilities, monthlyPayment, monthlyInterest, netWorth, monthlySavings };
+  const monthlySavings = totalIncome - monthlyPayment;
+  return { totalIncome, totalAssets, totalLiabilities, monthlyPayment, monthlyInterest, netWorth, monthlySavings };
 }
 
 // --- 렌더링 ---
@@ -82,7 +96,7 @@ let categoryChart = null;
 let growthChart = null;
 
 function render() {
-  const { totalAssets, totalLiabilities, monthlyPayment, monthlyInterest, netWorth, monthlySavings } = calcTotals();
+  const { totalIncome, totalAssets, totalLiabilities, monthlyPayment, monthlyInterest, netWorth, monthlySavings } = calcTotals();
 
   // 헤더
   document.getElementById('header-networth').textContent = fmt(netWorth);
@@ -94,10 +108,24 @@ function render() {
   document.getElementById('net-worth').textContent = fmt(netWorth);
   document.getElementById('monthly-payment').textContent = fmt(monthlyPayment);
 
-  // 수입 인풋
-  if (data.income) {
-    document.getElementById('monthly-income').value = data.income.toLocaleString('ko-KR');
-  }
+  // 수입 목록
+  const incomeList = document.getElementById('income-list');
+  incomeList.innerHTML = data.incomes.length === 0
+    ? '<p style="color:var(--muted);font-size:0.9rem;padding:8px 0">등록된 수입이 없습니다.</p>'
+    : data.incomes.map(i => `
+      <div class="item-row">
+        <div class="item-info">
+          <div class="item-name">${i.name}</div>
+        </div>
+        <div class="item-right">
+          <span class="item-amount asset">${fmt(i.amount)}</span>
+          <button class="btn icon" onclick="deleteIncome(${i.id})">✕</button>
+        </div>
+      </div>`).join('')
+    + `<div class="item-row" style="border-top:1px solid var(--border);margin-top:4px">
+        <div class="item-name" style="color:var(--muted)">총 월 수입</div>
+        <span class="item-amount asset">${fmt(totalIncome)}</span>
+      </div>`;
 
   // 자산 목록
   const assetList = document.getElementById('asset-list');
@@ -137,7 +165,7 @@ function render() {
       }).join('');
 
   // 월별 요약
-  document.getElementById('sum-income').textContent = fmt(data.income);
+  document.getElementById('sum-income').textContent = fmt(totalIncome);
   document.getElementById('sum-payment').textContent = fmt(monthlyPayment);
   document.getElementById('sum-interest').textContent = fmt(monthlyInterest);
   document.getElementById('sum-savings').textContent = fmt(monthlySavings > 0 ? monthlySavings : 0);

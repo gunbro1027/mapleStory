@@ -33,10 +33,12 @@
       <!-- 월 수입 -->
       <section class="card income-card">
         <h2 class="section-title">월 수입</h2>
-        <div class="income-row">
-          <input type="text" id="monthly-income" placeholder="월 수입 입력 (예: 3,000,000)" oninput="formatInput(this)" />
-          <button class="btn primary" onclick="saveIncome()">저장</button>
+        <div class="form-row">
+          <input type="text" id="income-name" placeholder="수입명 (예: 월급, 부업)" />
+          <input type="text" id="income-amount" placeholder="금액 (예: 3,000,000)" oninput="formatInput(this)" />
+          <button class="btn primary" onclick="addIncome()">추가</button>
         </div>
+        <div id="income-list" class="item-list"></div>
       </section>
 
       <!-- 요약 카드 -->
