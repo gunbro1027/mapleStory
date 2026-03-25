@@ -34,7 +34,7 @@
       <section class="card income-card">
         <h2 class="section-title">월 수입</h2>
         <div class="income-row">
-          <input type="number" id="monthly-income" placeholder="월 수입 입력 (원)" />
+          <input type="text" id="monthly-income" placeholder="월 수입 입력 (예: 3,000,000)" oninput="formatInput(this)" />
           <button class="btn primary" onclick="saveIncome()">저장</button>
         </div>
       </section>
@@ -71,7 +71,7 @@
             <option value="암호화폐">암호화폐</option>
             <option value="기타">기타</option>
           </select>
-          <input type="number" id="asset-amount" placeholder="금액 (원)" />
+          <input type="text" id="asset-amount" placeholder="금액 (예: 1,000,000)" oninput="formatInput(this)" />
           <button class="btn primary" onclick="addAsset()">추가</button>
         </div>
         <div id="asset-list" class="item-list"></div>
@@ -82,8 +82,9 @@
         <h2 class="section-title">부채</h2>
         <div class="form-row">
           <input type="text" id="liability-name" placeholder="부채명 (예: 주택담보대출)" />
-          <input type="number" id="liability-total" placeholder="총 부채액 (원)" />
-          <input type="number" id="liability-monthly" placeholder="월 상환액 (원)" />
+          <input type="text" id="liability-total" placeholder="총 부채액 (예: 50,000,000)" oninput="formatInput(this)" />
+          <input type="text" id="liability-monthly" placeholder="월 상환액 (예: 500,000)" oninput="formatInput(this)" />
+          <input type="number" id="liability-rate" placeholder="연 이자율 (%)" step="0.1" min="0" max="100" style="max-width:140px" />
           <button class="btn danger" onclick="addLiability()">추가</button>
         </div>
         <div id="liability-list" class="item-list"></div>
@@ -112,6 +113,10 @@
           <div class="summary-row">
             <span>월 상환액</span>
             <strong id="sum-payment" class="red-text">₩0</strong>
+          </div>
+          <div class="summary-row">
+            <span>월 이자 합계</span>
+            <strong id="sum-interest" class="red-text">₩0</strong>
           </div>
           <div class="summary-row highlight">
             <span>월 저축 가능액</span>

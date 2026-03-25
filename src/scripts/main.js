@@ -1,3 +1,13 @@
+// --- 숫자 입력 포맷 (콤마) ---
+function formatInput(el) {
+  const raw = el.value.replace(/[^0-9]/g, '');
+  el.value = raw ? parseInt(raw).toLocaleString('ko-KR') : '';
+}
+
+function parseInput(id) {
+  return parseInt(document.getElementById(id).value.replace(/,/g, '')) || 0;
+}
+
 // --- 데이터 로드/저장 ---
 let data = JSON.parse(localStorage.getItem('financeData') || '{"income":0,"assets":[],"liabilities":[]}');
 
@@ -8,7 +18,7 @@ function save() {
 
 // --- 수입 ---
 function saveIncome() {
-  const val = parseInt(document.getElementById('monthly-income').value);
+  const val = parseInput('monthly-income');
   if (!val || val < 0) return;
   data.income = val;
   save();
@@ -18,7 +28,7 @@ function saveIncome() {
 function addAsset() {
   const name = document.getElementById('asset-name').value.trim();
   const category = document.getElementById('asset-category').value;
-  const amount = parseInt(document.getElementById('asset-amount').value);
+  const amount = parseInput('asset-amount');
   if (!name || !amount || amount < 0) return alert('자산명과 금액을 입력해주세요.');
   data.assets.push({ id: Date.now(), name, category, amount });
   document.getElementById('asset-name').value = '';
@@ -34,13 +44,15 @@ function deleteAsset(id) {
 // --- 부채 ---
 function addLiability() {
   const name = document.getElementById('liability-name').value.trim();
-  const total = parseInt(document.getElementById('liability-total').value);
-  const monthly = parseInt(document.getElementById('liability-monthly').value);
+  const total = parseInput('liability-total');
+  const monthly = parseInput('liability-monthly');
+  const rate = parseFloat(document.getElementById('liability-rate').value) || 0;
   if (!name || !total || !monthly) return alert('모든 항목을 입력해주세요.');
-  data.liabilities.push({ id: Date.now(), name, total, monthly });
+  data.liabilities.push({ id: Date.now(), name, total, monthly, rate });
   document.getElementById('liability-name').value = '';
   document.getElementById('liability-total').value = '';
   document.getElementById('liability-monthly').value = '';
+  document.getElementById('liability-rate').value = '';
   save();
 }
 
@@ -49,7 +61,7 @@ function deleteLiability(id) {
   save();
 }
 
-// --- 숫자 포맷 ---
+// --- 숫자 표시 포맷 ---
 function fmt(n) {
   return '₩' + Math.round(n).toLocaleString('ko-KR');
 }
@@ -59,9 +71,10 @@ function calcTotals() {
   const totalAssets = data.assets.reduce((s, a) => s + a.amount, 0);
   const totalLiabilities = data.liabilities.reduce((s, l) => s + l.total, 0);
   const monthlyPayment = data.liabilities.reduce((s, l) => s + l.monthly, 0);
+  const monthlyInterest = data.liabilities.reduce((s, l) => s + (l.total * (l.rate / 100) / 12), 0);
   const netWorth = totalAssets - totalLiabilities;
   const monthlySavings = data.income - monthlyPayment;
-  return { totalAssets, totalLiabilities, monthlyPayment, netWorth, monthlySavings };
+  return { totalAssets, totalLiabilities, monthlyPayment, monthlyInterest, netWorth, monthlySavings };
 }
 
 // --- 렌더링 ---
@@ -69,7 +82,7 @@ let categoryChart = null;
 let growthChart = null;
 
 function render() {
-  const { totalAssets, totalLiabilities, monthlyPayment, netWorth, monthlySavings } = calcTotals();
+  const { totalAssets, totalLiabilities, monthlyPayment, monthlyInterest, netWorth, monthlySavings } = calcTotals();
 
   // 헤더
   document.getElementById('header-networth').textContent = fmt(netWorth);
@@ -82,7 +95,9 @@ function render() {
   document.getElementById('monthly-payment').textContent = fmt(monthlyPayment);
 
   // 수입 인풋
-  if (data.income) document.getElementById('monthly-income').value = data.income;
+  if (data.income) {
+    document.getElementById('monthly-income').value = data.income.toLocaleString('ko-KR');
+  }
 
   // 자산 목록
   const assetList = document.getElementById('asset-list');
@@ -92,9 +107,7 @@ function render() {
       <div class="item-row">
         <div class="item-info">
           <span class="item-badge">${a.category}</span>
-          <div>
-            <div class="item-name">${a.name}</div>
-          </div>
+          <div class="item-name">${a.name}</div>
         </div>
         <div class="item-right">
           <span class="item-amount asset">${fmt(a.amount)}</span>
@@ -106,23 +119,27 @@ function render() {
   const liabilityList = document.getElementById('liability-list');
   liabilityList.innerHTML = data.liabilities.length === 0
     ? '<p style="color:var(--muted);font-size:0.9rem;padding:8px 0">등록된 부채가 없습니다.</p>'
-    : data.liabilities.map(l => `
+    : data.liabilities.map(l => {
+        const monthlyInt = l.total * (l.rate / 100) / 12;
+        return `
       <div class="item-row">
         <div class="item-info">
           <div>
             <div class="item-name">${l.name}</div>
-            <div class="item-sub">월 상환 ${fmt(l.monthly)}</div>
+            <div class="item-sub">월 상환 ${fmt(l.monthly)}${l.rate ? ` · 연 이자율 ${l.rate}% (월 이자 ${fmt(monthlyInt)})` : ''}</div>
           </div>
         </div>
         <div class="item-right">
           <span class="item-amount liability">${fmt(l.total)}</span>
           <button class="btn icon" onclick="deleteLiability(${l.id})">✕</button>
         </div>
-      </div>`).join('');
+      </div>`;
+      }).join('');
 
   // 월별 요약
   document.getElementById('sum-income').textContent = fmt(data.income);
   document.getElementById('sum-payment').textContent = fmt(monthlyPayment);
+  document.getElementById('sum-interest').textContent = fmt(monthlyInterest);
   document.getElementById('sum-savings').textContent = fmt(monthlySavings > 0 ? monthlySavings : 0);
   document.getElementById('sum-1year').textContent = fmt(netWorth + (monthlySavings > 0 ? monthlySavings * 12 : 0));
   document.getElementById('sum-3year').textContent = fmt(netWorth + (monthlySavings > 0 ? monthlySavings * 36 : 0));
@@ -155,9 +172,7 @@ function renderCharts(netWorth, monthlySavings) {
     },
     options: {
       plugins: {
-        legend: {
-          labels: { color: '#8b90a0', font: { family: 'Noto Sans KR' } }
-        }
+        legend: { labels: { color: '#8b90a0', font: { family: 'Noto Sans KR' } } }
       },
       cutout: '65%',
     }
@@ -189,9 +204,7 @@ function renderCharts(netWorth, monthlySavings) {
       }]
     },
     options: {
-      plugins: {
-        legend: { display: false }
-      },
+      plugins: { legend: { display: false } },
       scales: {
         x: {
           ticks: { color: '#8b90a0', maxTicksLimit: 7 },
@@ -209,5 +222,4 @@ function renderCharts(netWorth, monthlySavings) {
   });
 }
 
-// 초기 렌더
 render();
