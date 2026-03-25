@@ -100,9 +100,10 @@ function deleteAsset(id) {
 function addLiability() {
   const name = document.getElementById('liability-name').value.trim();
   const total = parseInput('liability-total');
-  const monthly = parseInput('liability-monthly');
+  const monthlyInput = document.getElementById('liability-monthly').value.replace(/,/g, '');
+  const monthly = monthlyInput === '' ? 0 : parseInt(monthlyInput) || 0;
   const rate = parseFloat(document.getElementById('liability-rate').value) || 0;
-  if (!name || !total || !monthly) return alert('모든 항목을 입력해주세요.');
+  if (!name || !total) return alert('부채명과 총 부채액을 입력해주세요.');
   data.liabilities.push({ id: Date.now(), name, total, monthly, rate });
   document.getElementById('liability-name').value = '';
   document.getElementById('liability-total').value = '';
@@ -191,13 +192,24 @@ function render() {
   liabilityList.innerHTML = data.liabilities.length === 0
     ? '<p style="color:var(--muted);font-size:0.9rem;padding:8px 0">등록된 부채가 없습니다.</p>'
     : data.liabilities.map(l => {
-        const monthlyInt = l.total * (l.rate / 100) / 12;
+        const monthlyInt = l.rate ? l.total * (l.rate / 100) / 12 : 0;
+        const isInterestOnly = l.monthly === 0 || l.monthly <= monthlyInt;
+        const debtGrowth = monthlyInt - l.monthly; // 원금 감소 없이 이자가 쌓이는 금액
+        let subText = '';
+        if (l.rate) {
+          subText += `연 ${l.rate}% · 월 이자 ${fmt(monthlyInt)}`;
+          if (l.monthly > 0) subText += ` · 월 상환 ${fmt(l.monthly)}`;
+          if (isInterestOnly && debtGrowth > 0) subText += ` · ⚠ 매월 ${fmt(debtGrowth)} 부채 증가`;
+          else if (l.monthly === 0) subText += ` · 이자만 발생 중 (원금 상환 없음)`;
+        } else if (l.monthly > 0) {
+          subText = `월 상환 ${fmt(l.monthly)}`;
+        }
         return `
       <div class="item-row">
         <div class="item-info">
           <div>
             <div class="item-name">${l.name}</div>
-            <div class="item-sub">월 상환 ${fmt(l.monthly)}${l.rate ? ` · 연 이자율 ${l.rate}% (월 이자 ${fmt(monthlyInt)})` : ''}</div>
+            ${subText ? `<div class="item-sub">${subText}</div>` : ''}
           </div>
         </div>
         <div class="item-right">
@@ -215,7 +227,13 @@ function render() {
   function projectedAsset(years) {
     const savings = monthlySavings > 0 ? monthlySavings * 12 * years : 0;
     const investFV = data.investments.reduce((s, inv) => s + calcInvestFV(inv.monthly, inv.rate, years), 0);
-    return netWorth + savings + investFV;
+    // 이자만 내고 있는 부채의 누적 이자 (원금 상환 안 되는 부분)
+    const debtGrowth = data.liabilities.reduce((s, l) => {
+      const monthlyInt = l.rate ? l.total * (l.rate / 100) / 12 : 0;
+      const unpaid = Math.max(0, monthlyInt - l.monthly); // 매월 쌓이는 미상환 이자
+      return s + unpaid * 12 * years;
+    }, 0);
+    return netWorth + savings + investFV - debtGrowth;
   }
   document.getElementById('sum-1year').textContent = fmt(projectedAsset(1));
   document.getElementById('sum-3year').textContent = fmt(projectedAsset(3));
@@ -336,8 +354,12 @@ function renderInvestChart() {
   for (let i = 1; i <= investYears; i++) {
     const savings = monthlySavings > 0 ? monthlySavings * 12 * i : 0;
     const investFV = data.investments.reduce((s, inv) => s + calcInvestFV(inv.monthly, inv.rate, i), 0);
-    savingsOnly.push(netWorth + savings);
-    totalWithInvest.push(netWorth + savings + investFV);
+    const debtGrowth = data.liabilities.reduce((s, l) => {
+      const monthlyInt = l.rate ? l.total * (l.rate / 100) / 12 : 0;
+      return s + Math.max(0, monthlyInt - l.monthly) * 12 * i;
+    }, 0);
+    savingsOnly.push(netWorth + savings - debtGrowth);
+    totalWithInvest.push(netWorth + savings + investFV - debtGrowth);
   }
 
   const datasets = [
@@ -387,7 +409,11 @@ function renderInvestChart() {
   summaryEl.innerHTML = milestones.map(y => {
     const savings = monthlySavings > 0 ? monthlySavings * 12 * y : 0;
     const investFV = data.investments.reduce((s, inv) => s + calcInvestFV(inv.monthly, inv.rate, y), 0);
-    const total = netWorth + savings + investFV;
+    const debtGrowth = data.liabilities.reduce((s, l) => {
+      const monthlyInt = l.rate ? l.total * (l.rate / 100) / 12 : 0;
+      return s + Math.max(0, monthlyInt - l.monthly) * 12 * y;
+    }, 0);
+    const total = netWorth + savings + investFV - debtGrowth;
     return `
       <div class="invest-summary-card">
         <div class="year-label">${y}년 후</div>
