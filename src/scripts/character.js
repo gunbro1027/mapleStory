@@ -8,18 +8,7 @@ if (!charName) window.location.href = 'index.html';
 let globalOcid = null;
 let globalStat = null;
 
-// ── 탭 전환 ──────────────────────────────────
-function switchTab(tab, el) {
-  document.querySelectorAll('.detail-tab').forEach(t => t.classList.remove('active'));
-  el.classList.add('active');
-  document.getElementById('tab-content').innerHTML = '<div class="loading">불러오는 중...</div>';
-
-  if (tab === 'stat')    renderStat();
-  if (tab === 'charlist') loadCharList();
-  if (tab === 'achieve') loadAchieve();
-}
-
-// ── Tab1: 전투 스탯 ───────────────────────────
+// ── 전투 스탯 ─────────────────────────────────
 function renderStat() {
   const keyStats = [
     { label: 'HP',         key: 'HP' },
@@ -49,74 +38,6 @@ function renderStat() {
   document.getElementById('tab-content').innerHTML = cards
     ? `<div class="stat-grid">${cards}</div>`
     : '<div class="loading">스탯 정보가 없습니다.</div>';
-}
-
-// ── Tab2: 캐릭터 목록 ─────────────────────────
-async function loadCharList() {
-  try {
-    const res = await fetch(`${BASE_URL}/character/list`, { headers });
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(`오류 ${res.status}: ${err.error?.message || err.message || '불러올 수 없습니다.'}`);
-    }
-    const data = await res.json();
-    const list = data.account_list?.flatMap(a => a.character_list) || [];
-
-    if (!list.length) {
-      document.getElementById('tab-content').innerHTML = '<div class="loading">캐릭터 목록이 없습니다.</div>';
-      return;
-    }
-
-    document.getElementById('tab-content').innerHTML = `
-      <div class="char-list">
-        ${list.map(c => `
-          <div class="char-list-row" onclick="goCharacter('${c.character_name}')">
-            <div class="char-list-info">
-              <span class="char-list-name">${c.character_name}</span>
-              <span class="char-list-sub">${c.world_name} · ${c.character_class}</span>
-            </div>
-            <span class="char-list-level">Lv. ${c.character_level}</span>
-          </div>
-        `).join('')}
-      </div>
-    `;
-  } catch (err) {
-    document.getElementById('tab-content').innerHTML = `<div class="loading" style="color:#ff7070">${err.message}</div>`;
-  }
-}
-
-// ── Tab3: 업적 정보 ───────────────────────────
-async function loadAchieve() {
-  try {
-    const res = await fetch(`${BASE_URL}/user/achievement`, { headers });
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(`오류 ${res.status}: ${err.error?.message || err.message || '불러올 수 없습니다.'}`);
-    }
-    const data = await res.json();
-    const list = data.achievement || [];
-
-    if (!list.length) {
-      document.getElementById('tab-content').innerHTML = '<div class="loading">업적 정보가 없습니다.</div>';
-      return;
-    }
-
-    document.getElementById('tab-content').innerHTML = `
-      <div class="achieve-list">
-        ${list.map(a => `
-          <div class="achieve-row">
-            <div class="achieve-info">
-              <span class="achieve-name">${a.achievement_name}</span>
-              <span class="achieve-sub">${a.achievement_description || ''}</span>
-            </div>
-            <span class="achieve-grade">${a.achievement_grade || ''}</span>
-          </div>
-        `).join('')}
-      </div>
-    `;
-  } catch (err) {
-    document.getElementById('tab-content').innerHTML = `<div class="loading" style="color:#ff7070">${err.message}</div>`;
-  }
 }
 
 function goCharacter(name) {
@@ -182,12 +103,7 @@ async function loadCharacter() {
           </div>
         </div>
 
-        <!-- 탭 -->
-        <div class="detail-tabs">
-          <button class="detail-tab active" onclick="switchTab('stat', this)">전투 스탯</button>
-          <button class="detail-tab" onclick="switchTab('charlist', this)">캐릭터 목록</button>
-          <button class="detail-tab" onclick="switchTab('achieve', this)">업적</button>
-        </div>
+        <!-- 전투 스탯 -->
         <div id="tab-content" class="tab-content"></div>
 
       </div>
