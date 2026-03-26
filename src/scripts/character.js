@@ -2,8 +2,7 @@ const API_KEY = 'test_3c3ee9fcdbd9086a0a45c03537bc6180dd75379c7870ebbf5ce789b00a
 const BASE_URL = 'https://open.api.nexon.com/maplestory/v1';
 const headers = { 'x-nxopen-api-key': API_KEY };
 
-const params = new URLSearchParams(window.location.search);
-const charName = params.get('name');
+const charName = sessionStorage.getItem('charName');
 
 if (!charName) {
   window.location.href = 'index.html';

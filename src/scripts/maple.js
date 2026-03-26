@@ -10,5 +10,6 @@ document.getElementById('char-input').addEventListener('keydown', e => {
 async function searchCharacter() {
   const name = document.getElementById('char-input').value.trim();
   if (!name) return;
-  window.location.href = `character.html?name=${encodeURIComponent(name)}`;
+  sessionStorage.setItem('charName', name);
+  window.location.href = 'character.html';
 }
