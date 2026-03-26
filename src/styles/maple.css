@@ -251,6 +251,98 @@ body {
   color: var(--muted);
 }
 
+/* ── 랭킹 ── */
+.ranking-section {
+  padding-bottom: 80px;
+}
+
+.ranking-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.rank-tab {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 8px 20px;
+  color: var(--muted);
+  font-size: 0.9rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.rank-tab:hover { color: var(--text); }
+
+.rank-tab.active {
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  border-color: transparent;
+  color: #fff;
+}
+
+.ranking-list {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.rank-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.rank-row:last-child { border-bottom: none; }
+.rank-row:hover { background: var(--surface2); }
+
+.rank-num {
+  font-size: 1rem;
+  font-weight: 900;
+  color: var(--muted);
+  width: 28px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.rank-num.top {
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.rank-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.rank-name {
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.rank-sub {
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.rank-value {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--accent2);
+  flex-shrink: 0;
+}
+
 @media (max-width: 520px) {
   .hero-title { font-size: 2rem; }
   .char-card { flex-direction: column; align-items: flex-start; gap: 20px; }

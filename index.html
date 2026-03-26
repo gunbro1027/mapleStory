@@ -36,39 +36,16 @@
         </div>
       </section>
 
-      <section id="result-section" class="result-section hidden">
-        <div id="error-box" class="error-box hidden">
-          <span id="error-msg"></span>
+      <!-- 랭킹 섹션 -->
+      <section class="ranking-section">
+        <div class="ranking-tabs">
+          <button class="rank-tab active" onclick="switchTab('overall', this)">종합</button>
+          <button class="rank-tab" onclick="switchTab('union', this)">유니온</button>
+          <button class="rank-tab" onclick="switchTab('dojang', this)">무릉도장</button>
+          <button class="rank-tab" onclick="switchTab('theseed', this)">더 시드</button>
         </div>
-        <div id="char-card" class="char-card hidden">
-          <div class="char-image-wrap">
-            <img id="char-image" src="" alt="캐릭터 이미지" />
-          </div>
-          <div class="char-info">
-            <div class="char-name" id="char-name"></div>
-            <div class="char-badges">
-              <span class="badge world" id="char-world"></span>
-              <span class="badge class" id="char-class"></span>
-            </div>
-            <div class="char-stats">
-              <div class="stat-item">
-                <span class="stat-label">레벨</span>
-                <span class="stat-value" id="char-level"></span>
-              </div>
-              <div class="stat-item">
-                <span class="stat-label">경험치</span>
-                <span class="stat-value" id="char-exp"></span>
-              </div>
-              <div class="stat-item">
-                <span class="stat-label">인기도</span>
-                <span class="stat-value" id="char-popularity"></span>
-              </div>
-              <div class="stat-item">
-                <span class="stat-label">길드</span>
-                <span class="stat-value" id="char-guild"></span>
-              </div>
-            </div>
-          </div>
+        <div id="ranking-list" class="ranking-list">
+          <div class="loading">랭킹 불러오는 중...</div>
         </div>
       </section>
     </main>
