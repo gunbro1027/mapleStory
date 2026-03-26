@@ -40,7 +40,10 @@ async function loadRanking(type) {
 
   try {
     const res = await fetch(`${BASE_URL}${cfg.url}?date=${date}&page=1`, { headers });
-    if (!res.ok) throw new Error('랭킹 데이터를 불러올 수 없습니다.');
+    if (!res.ok) {
+      const errBody = await res.json().catch(() => ({}));
+      throw new Error(`오류 ${res.status}: ${errBody.error?.message || errBody.message || '랭킹 데이터를 불러올 수 없습니다.'}`);
+    }
     const data = await res.json();
     const items = data[cfg.key] || [];
 
